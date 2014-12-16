@@ -2,19 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 )
 
-// Listen to status codes from unix commands.
-// 0 - Green.. it's done
-// 1 - Red.. something went wrong
-// other - Yellow.. still in progress
-
-// Change status bar color
-
 func main() {
+	SetTmuxStatusColor("yellow")
 	args := os.Args[1:]
 
 	if len(args) == 0 {
@@ -23,10 +18,33 @@ func main() {
 
 	cmd := exec.Command(args[0], args[1:]...)
 
-	data, err := cmd.Output()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	fmt.Print(string(data))
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = cmd.Start()
+
+	go io.Copy(os.Stdout, stdout)
+	go io.Copy(os.Stderr, stderr)
+
+	cmd.Wait()
+
+	if cmd.ProcessState.Success() {
+		fmt.Println("It finished bro")
+		SetTmuxStatusColor("green")
+	} else {
+		fmt.Println("naw you didn't success it")
+		SetTmuxStatusColor("red")
+	}
+}
+
+func SetTmuxStatusColor(color string) error {
+	cmd := exec.Command("tmux", "set", "status-bg", color)
+	return cmd.Run()
 }
