@@ -19,14 +19,10 @@ func main() {
 	cmd := exec.Command(args[0], args[1:]...)
 
 	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	ExitIfErr(err)
 
 	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	ExitIfErr(err)
 
 	err = cmd.Start()
 
@@ -36,10 +32,8 @@ func main() {
 	cmd.Wait()
 
 	if cmd.ProcessState.Success() {
-		fmt.Println("It finished bro")
 		SetTmuxStatusColor("green")
 	} else {
-		fmt.Println("naw you didn't success it")
 		SetTmuxStatusColor("red")
 	}
 }
@@ -47,4 +41,15 @@ func main() {
 func SetTmuxStatusColor(color string) error {
 	cmd := exec.Command("tmux", "set", "status-bg", color)
 	return cmd.Run()
+}
+
+func ExitIfErr(err error) {
+	if err != nil {
+		Exit(err)
+	}
+}
+
+func Exit(message interface{}) {
+	fmt.Fprint(os.Stderr, message)
+	os.Exit(1)
 }
