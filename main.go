@@ -24,12 +24,12 @@ func main() {
 	stderr, err := cmd.StderrPipe()
 	ExitIfErr(err)
 
-	err = cmd.Start()
+	ExitIfErr(cmd.Start())
 
 	go io.Copy(os.Stdout, stdout)
 	go io.Copy(os.Stderr, stderr)
 
-	cmd.Wait()
+	ExitIfErr(cmd.Wait())
 
 	if cmd.ProcessState.Success() {
 		SetTmuxStatusColor("green")
@@ -50,6 +50,7 @@ func ExitIfErr(err error) {
 }
 
 func Exit(message interface{}) {
+	SetTmuxStatusColor("red")
 	fmt.Fprint(os.Stderr, message)
 	os.Exit(1)
 }
